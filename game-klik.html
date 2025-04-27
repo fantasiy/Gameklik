@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Game Klik + Shop Update</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #f0f0f0;
+    }
+    #coinCount, #statusSkill {
+      font-size: 24px;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+    #button {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background-color: red;
+      border: none;
+      cursor: pointer;
+      margin-bottom: 20px;
+      transition: background-color 0.3s;
+      position: relative;
+    }
+    #button.green {
+      background-color: green;
+    }
+    .shop {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 320px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    .shop h2 {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .shop-item {
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .shop-item button {
+      padding: 5px 10px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    #saveButton, #resetButton {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .floating-text {
+      position: absolute;
+      color: #333;
+      animation: floatUp 1s ease-out forwards;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-50px); }
+    }
+  </style>
+</head>
+<body>  
+  <div id="coinCount">Koin: 0</div>
+  <div id="statusSkill">Multiplier: ×1 | Auto-Click: 0/detik</div>
+  <button id="button"></button>  
+
+  <div class="shop" id="multiplierShop">
+    <h2>Shop Multiplier</h2>
+  </div>
+  
+  <div class="shop" id="autoClickShop">
+    <h2>Shop Auto-Click</h2>
+  </div>
+
+  <button id="saveButton">Save Manual</button>
+  <button id="resetButton">Reset Game</button>
+
+  <script>
+    let coinCount = parseInt(localStorage.getItem('coinCount')) || 0;
+    let multiplier = parseInt(localStorage.getItem('multiplier')) || 1;
+    let autoClick = parseInt(localStorage.getItem('autoClick')) || 0;
+
+    const coinDisplay = document.getElementById('coinCount');
+    const statusSkill = document.getElementById('statusSkill');
+    const button = document.getElementById('button');
+    const saveButton = document.getElementById('saveButton');
+    const resetButton = document.getElementById('resetButton');
+    const multiplierShop = document.getElementById('multiplierShop');
+    const autoClickShop = document.getElementById('autoClickShop');
+
+    function updateDisplay() {
+      coinDisplay.textContent = `Koin: ${coinCount}`;
+      statusSkill.textContent = `Multiplier: ×${multiplier} | Auto-Click: ${autoClick * multiplier}/detik`;
+    }
+
+    function floatText(amount) {
+      const float = document.createElement('div');
+      float.className = 'floating-text';
+      float.textContent = `+${amount}`;
+      float.style.left = Math.random() * 60 + 30 + 'px';
+      button.appendChild(float);
+      setTimeout(() => float.remove(), 1000);
+    }
+
+    button.addEventListener('click', () => {
+      button.classList.toggle('green');
+      let earnedCoins = multiplier;
+      coinCount += earnedCoins;
+      localStorage.setItem('coinCount', coinCount);
+      updateDisplay();
+      floatText(earnedCoins);
+    });
+
+    function buyMultiplier(amount, cost, buttonElement) {
+      if (coinCount >= cost) {
+        coinCount -= cost;
+        multiplier += amount;
+        localStorage.setItem('coinCount', coinCount);
+        localStorage.setItem('multiplier', multiplier);
+        buttonElement.disabled = true;
+        updateDisplay();
+        alert(`Berhasil beli ×${amount} per klik!`);
+      } else {
+        alert('Koin tidak cukup!');
+      }
+    }
+
+    function buyAutoClick(amount, cost, buttonElement) {
+      if (coinCount >= cost) {
+        coinCount -= cost;
+        autoClick += amount;
+        localStorage.setItem('coinCount', coinCount);
+        localStorage.setItem('autoClick', autoClick);
+        buttonElement.disabled = true;
+        updateDisplay();
+        alert(`Berhasil beli Auto ${amount} klik/detik!`);
+      } else {
+        alert('Koin tidak cukup!');
+      }
+    }
+
+    saveButton.addEventListener('click', () => {
+      localStorage.setItem('coinCount', coinCount);
+      localStorage.setItem('multiplier', multiplier);
+      localStorage.setItem('autoClick', autoClick);
+      alert('Progress disimpan!');
+    });
+
+    resetButton.addEventListener('click', () => {
+      localStorage.clear(); // Reset all stored data
+      coinCount = 0;
+      multiplier = 1;
+      autoClick = 0;
+      updateDisplay();
+      alert('Game telah di-reset!');
+    });
+
+    setInterval(() => {
+      if (autoClick > 0) {
+        let earnedCoins = autoClick * multiplier;
+        coinCount += earnedCoins;
+        localStorage.setItem('coinCount', coinCount);
+        updateDisplay();
+        floatText(earnedCoins);
+      }
+    }, 1000);
+
+    updateDisplay();
+
+    // Generate shop items
+    const multiplierShopItems = [
+      [2, 100], [5, 500], [10, 1000], [20, 5000], [50, 10000], [100, 50000],
+      [200, 100000], [500, 250000], [1000, 500000], [2000, 1000000], [5000, 2500000],
+      [10000, 5000000], [20000, 10000000], [50000, 25000000]
+    ];
+
+    const autoClickShopItems = [
+      [1, 100], [5, 300], [10, 500], [20, 1000], [50, 5000], [100, 10000],
+      [200, 20000], [500, 50000], [1000, 100000], [2000, 200000], [5000, 500000],
+      [10000, 1000000], [20000, 2000000], [50000, 5000000]
+    ];
+
+    // Add multiplier items
+    multiplierShopItems.forEach(([amount, cost]) => {
+      const item = document.createElement('div');
+      item.className = 'shop-item';
+      const button = document.createElement('button');
+      button.textContent = `Beli (${cost} Koin)`;
+      button.onclick = () => buyMultiplier(amount, cost, button);
+      item.innerHTML = `×${amount} Per Klik`;
+      item.appendChild(button);
+      multiplierShop.appendChild(item);
+    });
+
+    // Add auto-click items
+    autoClickShopItems.forEach(([amount, cost]) => {
+      const item = document.createElement('div');
+      item.className = 'shop-item';
+      const button = document.createElement('button');
+      button.textContent = `Beli (${cost} Koin)`;
+      button.onclick = () => buyAutoClick(amount, cost, button);
+      item.innerHTML = `Auto ${amount} Klik/Detik`;
+      item.appendChild(button);
+      autoClickShop.appendChild(item);
+    });
+  </script> 
+</body>
+</html>
